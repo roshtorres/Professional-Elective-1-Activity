@@ -1,0 +1,125 @@
+> emails = read.csv("emails.csv", stringsAsFactors=FALSE)
+> str(emails)
+'data.frame':   5728 obs. of  2 variables:
+ $ text: chr  "Subject: naturally irresistible your corporate identity  lt is really hard to recollect a company : the  market"| __truncated__ "Subject: the stock trading gunslinger  fanny is merrill but muzo not colza attainder and penultimate like esmar"| __truncated__ "Subject: unbelievable new homes made easy  im wanting to show you this  homeowner  you have been pre - approved"| __truncated__ "Subject: 4 color printing special  request additional information now ! click here  click here for a printable "| __truncated__ ...
+ $ spam: int  1 1 1 1 1 1 1 1 1 1 ...
+> table(emails$spam)
+
+   0    1 
+4360 1368 
+> emails$text[1]
+[1] "Subject: naturally irresistible your corporate identity  lt is really hard to recollect a company : the  market is full of suqgestions and the information isoverwhelminq ; but a good  catchy logo , stylish statlonery and outstanding website  will make the task much easier .  we do not promise that havinq ordered a iogo your  company will automaticaily become a world ieader : it isguite ciear that  without good products , effective business organization and practicable aim it  will be hotat nowadays market ; but we do promise that your marketing efforts  will become much more effective . here is the list of clear  benefits : creativeness : hand - made , original logos , specially done  to reflect your distinctive company image . convenience : logo and stationery  are provided in all formats ; easy - to - use content management system letsyou  change your website content and even its structure . promptness : you  will see logo drafts within three business days . affordability : your  marketing break - through shouldn ' t make gaps in your budget . 100 % satisfaction  guaranteed : we provide unlimited amount of changes with no extra fees for you to  be surethat you will love the result of this collaboration . have a look at our  portfolio _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ not interested . . . _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _"
+> library(tm)
+Loading required package: NLP
+Warning message:
+package ‘tm’ was built under R version 4.2.2 
+> corpus = Corpus(VectorSource(emails$text))
+> corpus = tm_map(corpus, tolower)
+Warning message:
+In tm_map.SimpleCorpus(corpus, tolower) : transformation drops documents
+> corpus = tm_map(corpus, removePunctuation)
+Warning message:
+In tm_map.SimpleCorpus(corpus, removePunctuation) :
+  transformation drops documents
+> corpus = tm_map(corpus, removeWords, stopwords("english"))
+Warning message:
+In tm_map.SimpleCorpus(corpus, removeWords, stopwords("english")) :
+  transformation drops documents
+> corpus = tm_map(corpus, stemDocument)
+Warning message:
+In tm_map.SimpleCorpus(corpus, stemDocument) :
+  transformation drops documents
+> dtm = DocumentTermMatrix(corpus)
+> dtm
+<<DocumentTermMatrix (documents: 5728, terms: 28687)>>
+Non-/sparse entries: 481719/163837417
+Sparsity           : 100%
+Maximal term length: 24
+Weighting          : term frequency (tf)
+> spdtm = removeSparseTerms(dtm, 0.95)
+> spdtm
+<<DocumentTermMatrix (documents: 5728, terms: 330)>>
+Non-/sparse entries: 213551/1676689
+Sparsity           : 89%
+Maximal term length: 10
+Weighting          : term frequency (tf)
+> emailsSparse = as.data.frame(as.matrix(spdtm))
+> names(emailsSparse) = make.names(names(emailsSparse))
+> emailsSparse$spam = as.factor(emails$spam)
+> set.seed(123)
+> library(caTools)
+Warning message:
+package ‘caTools’ was built under R version 4.2.2 
+> spl = sample.split(emailsSparse$spam, 0.7)
+> library(dplyr)
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> train = emailsSparse %>% filter(spl == TRUE)
+> test = emailsSparse %>% filter(spl == FALSE)
+> library(rpart)
+Warning message:
+package ‘rpart’ was built under R version 4.2.2 
+> spamCART = rpart(spam~., data=train, method="class")
+> set.seed(123)
+> library(randomForest)
+randomForest 4.7-1.1
+Type rfNews() to see new features/changes/bug fixes.
+
+Attaching package: ‘randomForest’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+
+Warning message:
+package ‘randomForest’ was built under R version 4.2.2 
+> spamRF = randomForest(spam~., data=train)
+> predTrainCART = predict(spamCART)[,2]
+> predTrainRF = predict(spamRF, type="prob")[,2]
+> table(train$spam, predTrainCART > 0.5)
+   
+    FALSE TRUE
+  0  2885  167
+  1    64  894
+> table(train$spam, predTrainRF > 0.5)
+   
+    FALSE TRUE
+  0  3017   35
+  1    42  916
+> library(ROCR)
+Warning message:
+package ‘ROCR’ was built under R version 4.2.2 
+> predictionTrainCART = prediction(predTrainCART, train$spam)
+> as.numeric(performance(predictionTrainCART, "auc")@y.values)
+[1] 0.9696044
+> predictionTrainRF = prediction(predTrainRF, train$spam)
+> as.numeric(performance(predictionTrainRF, "auc")@y.values)
+[1] 0.9978952
+> predTestCART = predict(spamCART, newdata=test)[,2]
+> predTestRF = predict(spamRF, newdata=test, type="prob")[,2]
+> table(test$spam, predTestCART > 0.5)
+   
+    FALSE TRUE
+  0  1228   80
+  1    24  386
+> predictionTestCART = prediction(predTestCART, test$spam)
+> as.numeric(performance(predictionTestCART, "auc")@y.values)
+[1] 0.963176
+> table(test$spam, predTestRF > 0.5)
+   
+    FALSE TRUE
+  0  1291   17
+  1    25  385
+> predictionTestRF = prediction(predTestRF, test$spam)
+> as.numeric(performance(predictionTestRF, "auc")@y.values)
+[1] 0.997768
+> 

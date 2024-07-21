@@ -1,0 +1,140 @@
+> songs = read.csv("songs.csv")
+> library(dplyr)
+> SongsTrain = songs %>% filter(year <= 2009)
+> SongsTest = songs %>% filter(year == 2010)
+> str(SongsTrain)
+'data.frame':   7201 obs. of  39 variables:
+ $ year                    : int  2009 2009 2009 2009 2009 2009 2009 2009 2009 2009 ...
+ $ songtitle               : chr  "The Awkward Goodbye" "Rubik's Cube" "Superhuman Touch" "The Getaway" ...
+ $ artistname              : chr  "Athlete" "Athlete" "Athlete" "Athlete" ...
+ $ songID                  : chr  "SOUALGK12AB017FC37" "SOGPIQC12AB0182B15" "SOBNYZN13774E81F76" "SOHFEOA1366EE931DD" ...
+ $ artistID                : chr  "ARDW3YJ1187FB4CCE5" "ARDW3YJ1187FB4CCE5" "ARDW3YJ1187FB4CCE5" "ARDW3YJ1187FB4CCE5" ...
+ $ timesignature           : int  3 3 4 4 4 4 4 4 4 4 ...
+ $ timesignature_confidence: num  0.732 0.906 0.987 0.822 0.983 1 0.821 0.997 0.816 1 ...
+ $ loudness                : num  -6.32 -9.54 -4.84 -5.27 -6.23 ...
+ $ tempo                   : num  89.6 117.7 119 71.5 77.5 ...
+ $ tempo_confidence        : num  0.652 0.542 0.838 0.613 0.74 0.821 0.912 0.609 0.786 0.27 ...
+ $ key                     : int  1 0 6 4 8 9 6 9 0 9 ...
+ $ key_confidence          : num  0.773 0.722 0.106 0.781 0.552 0.218 0.275 0.333 0.634 0.578 ...
+ $ energy                  : num  0.599 0.363 0.76 0.755 0.524 ...
+ $ pitch                   : num  0.004 0.006 0.003 0.014 0.008 0.012 0.002 0.003 0.001 0.006 ...
+ $ timbre_0_min            : num  0 0.739 0 0 0 ...
+ $ timbre_0_max            : num  57.8 57.1 57.8 58.3 57.6 ...
+ $ timbre_1_min            : num  -62.3 -220.2 -189.7 -113.9 -160.6 ...
+ $ timbre_1_max            : num  286 241 187 171 217 ...
+ $ timbre_2_min            : num  -81.8 -96.8 -139.1 -71.6 -79.5 ...
+ $ timbre_2_max            : num  211 215 135 195 114 ...
+ $ timbre_3_min            : num  -217 -202 -116 -276 -184 ...
+ $ timbre_3_max            : num  203.2 124.2 94.7 146.3 108.7 ...
+ $ timbre_4_min            : num  -55.9 -52.4 -55.6 -59.4 -31.9 ...
+ $ timbre_4_max            : num  97.6 131.9 79.3 121.7 169.7 ...
+ $ timbre_5_min            : num  -62.5 -73.9 -73.5 -71.1 -73 ...
+ $ timbre_5_max            : num  82.2 73.6 41 39.6 233.9 ...
+ $ timbre_6_min            : num  -82.1 -63.5 -41.5 -77.8 -76 ...
+ $ timbre_6_max            : num  59.2 70.1 62.8 94.5 58 ...
+ $ timbre_7_min            : num  -109.4 -90.1 -69.3 -69.1 -78.8 ...
+ $ timbre_7_max            : num  71 112.9 90.4 93.4 100.8 ...
+ $ timbre_8_min            : num  -71.8 -64.5 -52.5 -55.8 -61.4 ...
+ $ timbre_8_max            : num  58.4 58.1 40.7 79 50.3 ...
+ $ timbre_9_min            : num  -53.8 -76.9 -50.4 -51.5 -63 ...
+ $ timbre_9_max            : num  88.6 74.4 58.8 70.5 96.8 ...
+ $ timbre_10_min           : num  -89.8 -88.2 -78.2 -74.9 -90.4 ...
+ $ timbre_10_max           : num  38 42.2 35.3 30.8 60.5 ...
+ $ timbre_11_min           : num  -52.1 -66.8 -54.2 -51.4 -52.1 ...
+ $ timbre_11_max           : num  52.8 40.7 46.5 27.8 48.1 ...
+ $ Top10                   : int  0 0 0 0 0 0 0 0 0 0 ...
+> nrow(SongsTrain)
+[1] 7201
+> nonvars = c("year", "songtitle", "artistname", "songID", "artistID")
+> SongsTrain = SongsTrain[ , !(names(SongsTrain) %in% nonvars) ]
+> SongsTest = SongsTest[ , !(names(SongsTest) %in% nonvars) ]
+> SongsLog1 = glm(Top10 ~ ., data=SongsTrain, family=binomial)
+> summary(SongsLog1)
+
+Call:
+glm(formula = Top10 ~ ., family = binomial, data = SongsTrain)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-1.9220  -0.5399  -0.3459  -0.1845   3.0770  
+
+Coefficients:
+                           Estimate Std. Error z value Pr(>|z|)    
+(Intercept)               1.470e+01  1.806e+00   8.138 4.03e-16 ***
+timesignature             1.264e-01  8.674e-02   1.457 0.145050    
+timesignature_confidence  7.450e-01  1.953e-01   3.815 0.000136 ***
+loudness                  2.999e-01  2.917e-02  10.282  < 2e-16 ***
+tempo                     3.634e-04  1.691e-03   0.215 0.829889    
+tempo_confidence          4.732e-01  1.422e-01   3.329 0.000873 ***
+key                       1.588e-02  1.039e-02   1.529 0.126349    
+key_confidence            3.087e-01  1.412e-01   2.187 0.028760 *  
+energy                   -1.502e+00  3.099e-01  -4.847 1.25e-06 ***
+pitch                    -4.491e+01  6.835e+00  -6.570 5.02e-11 ***
+timbre_0_min              2.316e-02  4.256e-03   5.441 5.29e-08 ***
+timbre_0_max             -3.310e-01  2.569e-02 -12.882  < 2e-16 ***
+timbre_1_min              5.881e-03  7.798e-04   7.542 4.64e-14 ***
+timbre_1_max             -2.449e-04  7.152e-04  -0.342 0.732087    
+timbre_2_min             -2.127e-03  1.126e-03  -1.889 0.058843 .  
+timbre_2_max              6.586e-04  9.066e-04   0.726 0.467571    
+timbre_3_min              6.920e-04  5.985e-04   1.156 0.247583    
+timbre_3_max             -2.967e-03  5.815e-04  -5.103 3.34e-07 ***
+timbre_4_min              1.040e-02  1.985e-03   5.237 1.63e-07 ***
+timbre_4_max              6.110e-03  1.550e-03   3.942 8.10e-05 ***
+timbre_5_min             -5.598e-03  1.277e-03  -4.385 1.16e-05 ***
+timbre_5_max              7.736e-05  7.935e-04   0.097 0.922337    
+timbre_6_min             -1.686e-02  2.264e-03  -7.445 9.66e-14 ***
+timbre_6_max              3.668e-03  2.190e-03   1.675 0.093875 .  
+timbre_7_min             -4.549e-03  1.781e-03  -2.554 0.010661 *  
+timbre_7_max             -3.774e-03  1.832e-03  -2.060 0.039408 *  
+timbre_8_min              3.911e-03  2.851e-03   1.372 0.170123    
+timbre_8_max              4.011e-03  3.003e-03   1.336 0.181620    
+timbre_9_min              1.367e-03  2.998e-03   0.456 0.648356    
+timbre_9_max              1.603e-03  2.434e-03   0.659 0.510188    
+timbre_10_min             4.126e-03  1.839e-03   2.244 0.024852 *  
+timbre_10_max             5.825e-03  1.769e-03   3.292 0.000995 ***
+timbre_11_min            -2.625e-02  3.693e-03  -7.108 1.18e-12 ***
+timbre_11_max             1.967e-02  3.385e-03   5.811 6.21e-09 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 6017.5  on 7200  degrees of freedom
+Residual deviance: 4759.2  on 7167  degrees of freedom
+AIC: 4827.2
+
+Number of Fisher Scoring iterations: 6
+
+> testPredict = predict(SongsLog1, newdata=SongsTest, type="response")
+> table(SongsTest$Top10, testPredict >= 0.45)
+   
+    FALSE TRUE
+  0   309    5
+  1    44   15
+> SongsTest$Pred = testPredict >= 0.45
+> SongsTest %>% group_by(Top10, Pred) %>% summarize(count = n())
+`summarise()` has grouped output by 'Top10'. You can override using the `.groups` argument.
+# A tibble: 4 × 3
+# Groups:   Top10 [2]
+  Top10 Pred  count
+  <int> <lgl> <int>
+1     0 FALSE   309
+2     0 TRUE      5
+3     1 FALSE    44
+4     1 TRUE     15
+> table(SongsTest$Top10)
+
+  0   1 
+314  59 
+> SongsTest %>% group_by(Top10) %>% summarize(count = n())
+# A tibble: 2 × 2
+  Top10 count
+  <int> <int>
+1     0   314
+2     1    59
+> table(SongsTest$Top10, testPredict >= 0.45)
+   
+    FALSE TRUE
+  0   309    5
+  1    44   15
+> 
